@@ -1,26 +1,26 @@
 ﻿{
    "CodeGenerationMode": 4,
-   "ContextClassName": "NorwindContext",
+   "ContextClassName": "DWHNorthwindOrdersContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
    "ModelNamespace": null,
    "OutputContextPath": null,
-   "OutputPath": "Models",
+   "OutputPath": "ModelsOrders",
    "PreserveCasingWithRegex": true,
-   "ProjectRootNamespace": "LoadDwOrders.Models",
+   "ProjectRootNamespace": "LoadDwOrders.Models.DWOrders",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 2,
    "SelectedToBeGenerated": 0,
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "[DWH].[vw_FactCustomersAtended]",
-         "ObjectType": 3
+         "Name": "[dbo].[FactCustomersAttended]",
+         "ObjectType": 0
       },
       {
-         "Name": "[DWH].[vwFactSales]",
-         "ObjectType": 3
+         "Name": "[dbo].[FactSales]",
+         "ObjectType": 0
       }
    ],
    "UiHint": null,

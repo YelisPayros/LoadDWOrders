@@ -14,6 +14,8 @@ namespace LoadDWOrders.Data.Context
         public DbSet<DimShipper> DimShippers { get; set; }
         public DbSet<DimCategory> DimCategories { get; set; }
         public DbSet<DimProduct> DimProducts { get; set; }
+        public DbSet<FactSales> FactSales { get; set; }
+        public DbSet<FactCustomersAtended> FactCustomersAtendeds { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

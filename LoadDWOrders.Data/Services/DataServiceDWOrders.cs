@@ -22,12 +22,16 @@ namespace LoadDWOrders.Data.Services
 
         private async Task ClearDimTables()
         {
-            _dWOrdersContext.DimCustomers.RemoveRange(_dWOrdersContext.DimCustomers);
-            _dWOrdersContext.DimEmployees.RemoveRange(_dWOrdersContext.DimEmployees);
-            _dWOrdersContext.DimShippers.RemoveRange(_dWOrdersContext.DimShippers);
-            _dWOrdersContext.DimCategories.RemoveRange(_dWOrdersContext.DimCategories);
-            _dWOrdersContext.DimProducts.RemoveRange(_dWOrdersContext.DimProducts);
-            await _dWOrdersContext.SaveChangesAsync();
+            // Clear fact tables first to avoid foreign key constraint issues
+            await _dWOrdersContext.Database.ExecuteSqlRawAsync("DELETE FROM FactSales");
+            await _dWOrdersContext.Database.ExecuteSqlRawAsync("DELETE FROM FactCustomersAttended");
+
+            // Clear dimension tables
+            await _dWOrdersContext.Database.ExecuteSqlRawAsync("DELETE FROM DimCustomer");
+            await _dWOrdersContext.Database.ExecuteSqlRawAsync("DELETE FROM DimEmployee");
+            await _dWOrdersContext.Database.ExecuteSqlRawAsync("DELETE FROM DimShipper");
+            await _dWOrdersContext.Database.ExecuteSqlRawAsync("DELETE FROM DimCategory");
+            await _dWOrdersContext.Database.ExecuteSqlRawAsync("DELETE FROM DimProduct");
         }
 
         public async Task<OperationResult> LoadDw()
@@ -35,7 +39,7 @@ namespace LoadDWOrders.Data.Services
             OperationResult result = new OperationResult();
             try
             {
-                await ClearDimTables(); // Call ClearDimTables only once
+                await ClearDimTables();   
 
                 await LoadDimEmployee();
                 await LoadDimShippers();
@@ -216,6 +220,40 @@ namespace LoadDWOrders.Data.Services
             try
             {
                 var ventas= await _norwindContext.VwFactSales.AsNoTracking().ToListAsync();
+
+                //ventas.ForEach(async cd =>
+                //{
+                   
+                //});
+
+                foreach(var venta in ventas)
+                {
+                    var customer = await _dWOrdersContext.DimCustomers.SingleOrDefaultAsync(cust => cust.CustomerID == venta.CustomerId);
+                    var employee = await _dWOrdersContext.DimEmployees.SingleOrDefaultAsync(emp => emp.EmployeeID == venta.EmployeeId);
+                    var shippers = await _dWOrdersContext.DimShippers.SingleOrDefaultAsync(ship => ship.ShipperID == venta.ShipperId);
+                    var product = await _dWOrdersContext.DimProducts.SingleOrDefaultAsync(prod => prod.ProductID == venta.ProductId);
+
+
+                    FactSales factSales = new FactSales()
+                    {
+                        CantidadVentas = venta.Cantidad,
+                        City = venta.City,
+                        CustomerKey = customer.CustomerKey,
+                        EmployeeKey = employee.EmployeeKey,
+                        ProductKey = product.ProductKey,
+                        ShipperKey = shippers.ShipperKey,
+                        TotalVentas = venta.TotalVentas,
+                        EmployeeName= employee.EmployeeName,
+                        ProductName = product.ProductName,
+
+                        
+                    };
+                    await _dWOrdersContext.FactSales.AddAsync(factSales);
+
+                    await _dWOrdersContext.SaveChangesAsync();
+
+                }
+
             }
             catch (Exception ex)
             {
@@ -231,8 +269,28 @@ namespace LoadDWOrders.Data.Services
             OperationResult result = new OperationResult();
             try
             {
-                var ventas = await _norwindContext.VwFactCustomersAtendeds.AsNoTracking().ToListAsync();
-            }
+                var clientes = await _norwindContext.VwFactCustomersAtendeds.AsNoTracking().ToListAsync();
+                foreach (var cliente in clientes)
+                {
+                    var employee = await _dWOrdersContext.DimEmployees.SingleOrDefaultAsync(emp => emp.EmployeeID == cliente.EmployeeId);
+                   
+
+
+
+
+                    FactCustomersAtended factCustomersAtended = new FactCustomersAtended()
+                    {
+
+                        EmployeeKey= employee.EmployeeKey,
+                        TotalCustomersServed= cliente.TotalCustomerServed
+                        
+
+                    };
+                    await _dWOrdersContext.FactCustomersAtendeds.AddAsync(factCustomersAtended);
+
+                    await _dWOrdersContext.SaveChangesAsync();
+                }
+             }
             catch (Exception ex)
             {
                 result.Success = false;
